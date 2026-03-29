@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Med Whisper</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div>
+            <p class="sidebar-label">Med Whisper</p>
+            <h1>Transcriptions</h1>
+          </div>
+          <button class="primary-button" id="new-note-button">New transcription</button>
+        </div>
+
+        <div class="history-list" id="history-list"></div>
+        <p class="empty-history" id="history-empty">No saved transcriptions yet.</p>
+
+        <details class="settings-panel">
+          <summary>Settings</summary>
+
+          <div class="settings-body">
+            <div class="status-row">
+              <span class="status-chip" id="status-chip">Checking local setup</span>
+            </div>
+
+            <div class="simple-setting">
+              <div>
+                <p class="path-label">English dictation</p>
+                <p class="helper-text" id="dictation-summary">Preparing local Whisper model...</p>
+              </div>
+              <div class="button-stack compact">
+                <button class="secondary-button" id="download-model-button">Download dictation model</button>
+              </div>
+            </div>
+
+            <div class="simple-setting">
+              <div>
+                <p class="path-label">Medical cleanup</p>
+                <p class="helper-text" id="cleanup-summary">Optional local cleanup after transcription.</p>
+              </div>
+              <div class="button-stack compact">
+                <button class="secondary-button" id="download-cleanup-model-button">Download cleanup model</button>
+                <button class="secondary-button" id="toggle-cleanup-button">Use cleanup</button>
+              </div>
+            </div>
+
+            <div class="advanced-hidden" aria-hidden="true">
+              <label class="field">
+                <span class="field-label">Model</span>
+                <select id="model-select"></select>
+              </label>
+
+              <p class="helper-text" id="model-description">Model details will appear here.</p>
+
+              <div class="button-stack">
+                <button class="secondary-button" id="select-cli-button">Select whisper-cli</button>
+                <button class="secondary-button" id="select-models-button">Choose models folder</button>
+                <button class="secondary-button" id="open-models-button">Open models folder</button>
+              </div>
+
+              <div class="path-block">
+                <p class="path-label">whisper-cli</p>
+                <p class="path-value" id="cli-path">Not configured yet</p>
+              </div>
+
+              <div class="path-block">
+                <p class="path-label">Models folder</p>
+                <p class="path-value" id="models-dir">Preparing folder path...</p>
+              </div>
+
+              <label class="checkbox-row">
+                <input type="checkbox" id="cleanup-enabled" />
+                <span>Use local medical cleanup with llama.cpp</span>
+              </label>
+
+              <label class="field">
+                <span class="field-label">Cleanup model</span>
+                <select id="cleanup-model-select"></select>
+              </label>
+
+              <p class="helper-text" id="cleanup-model-description">
+                Choose a cleanup model for grammar and medical-term correction.
+              </p>
+
+              <div class="button-stack">
+                <button class="secondary-button" id="select-llama-button">Select llama-cli</button>
+                <button class="secondary-button" id="select-cleanup-model-button">Select cleanup model</button>
+              </div>
+
+              <div class="path-block">
+                <p class="path-label">llama-cli</p>
+                <p class="path-value" id="llama-cli-path">Not configured yet</p>
+              </div>
+
+              <div class="path-block">
+                <p class="path-label">Cleanup model</p>
+                <p class="path-value" id="cleanup-model-path">No GGUF model selected.</p>
+              </div>
+
+              <div class="path-block">
+                <p class="path-label">Cleanup model folder</p>
+                <p class="path-value" id="cleanup-models-dir">Preparing folder path...</p>
+              </div>
+            </div>
+          </div>
+        </details>
+      </aside>
+
+      <section class="main-panel">
+        <header class="main-header">
+          <div>
+            <p class="main-label" id="note-label">Current note</p>
+            <h2 id="note-title">New transcription</h2>
+            <p class="note-meta" id="note-meta">Ready for a new dictation.</p>
+          </div>
+          <p class="recording-timer" id="timer">00:00</p>
+        </header>
+
+        <section class="composer">
+          <div class="action-row">
+            <button class="primary-button" id="record-button">Start microphone</button>
+            <button class="danger-button" id="stop-button" disabled>Stop and transcribe</button>
+            <button class="secondary-button" id="copy-button" disabled>Copy</button>
+          </div>
+
+          <p class="session-status" id="session-status">
+            Local dictation is getting ready.
+          </p>
+
+          <textarea
+            id="transcript-output"
+            class="transcript-output"
+            placeholder="The transcript will appear here after you stop recording."
+            readonly
+          ></textarea>
+        </section>
+      </section>
+    </main>
+
+    <script src="./audio-recorder.js"></script>
+    <script src="./renderer.js"></script>
+  </body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "med-whisper",
+  "version": "0.1.0",
+  "description": "Local medical dictation desktop app powered by whisper.cpp",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "check": "node --check src/main/main.js && node --check src/main/preload.js && node --check src/main/config-store.js && node --check src/main/whisper-service.js && node --check src/main/llama-service.js && node --check src/renderer/renderer.js && node --check src/renderer/audio-recorder.js && node --check scripts/setup-whisper.js",
+    "whisper:setup": "node scripts/setup-whisper.js",
+    "test:e2e": "node scripts/test-e2e.js"
+  },
+  "keywords": [
+    "electron",
+    "whisper",
+    "whisper.cpp",
+    "transcription",
+    "medical"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^41.1.0",
+    "playwright": "^1.58.2"
+  }
+}

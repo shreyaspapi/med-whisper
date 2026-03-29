@@ -1,0 +1,13 @@
+node_modules/
+dist/
+release/
+out/
+build/
+vendor/
+whisper-models/
+llm-models/
+.tmp-user-data/
+.e2e/
+.app-user-data/
+.tmp-llama-test/
+*.log
