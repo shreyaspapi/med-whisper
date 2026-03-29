@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld("medWhisper", {
   selectLlamaCli: () => ipcRenderer.invoke("app:select-llama-cli"),
   selectCleanupModel: () => ipcRenderer.invoke("app:select-cleanup-model"),
   setCleanupEnabled: (enabled) => ipcRenderer.invoke("app:set-cleanup-enabled", enabled),
+  setSelectedModel: (modelId) => ipcRenderer.invoke("app:set-selected-model", modelId),
   downloadCleanupModel: (modelId) => ipcRenderer.invoke("app:download-cleanup-model", modelId),
   openModelsDir: () => ipcRenderer.invoke("app:open-models-dir"),
   downloadModel: (modelId) => ipcRenderer.invoke("app:download-model", modelId),
@@ -16,5 +17,10 @@ contextBridge.exposeInMainWorld("medWhisper", {
     const listener = (_event, state) => callback(state);
     ipcRenderer.on("app:state-updated", listener);
     return () => ipcRenderer.removeListener("app:state-updated", listener);
+  },
+  onProgressUpdated: (callback) => {
+    const listener = (_event, progress) => callback(progress);
+    ipcRenderer.on("app:progress-updated", listener);
+    return () => ipcRenderer.removeListener("app:progress-updated", listener);
   },
 });

@@ -125,6 +125,12 @@ async function saveModelsDir(context, modelsDir) {
   await writeAppConfig(context, config);
 }
 
+async function saveSelectedModelId(context, selectedModelId) {
+  const config = await readAppConfig(context);
+  config.selectedModelId = selectedModelId;
+  await writeAppConfig(context, config);
+}
+
 function getWhisperCliCandidates(context, configuredPath) {
   const candidates = [];
 
@@ -236,6 +242,7 @@ async function resolveWhisperState(context) {
     whisperCliPath,
     whisperConfigured: Boolean(whisperCliPath),
     modelsDir,
+    selectedModelId: config.selectedModelId || null,
     modelOptions: KNOWN_MODELS.map((model) => ({
       ...model,
       installed: installedSet.has(model.id),
@@ -245,7 +252,8 @@ async function resolveWhisperState(context) {
   };
 }
 
-async function downloadToFile(url, destinationPath) {
+async function downloadToFile(url, destinationPath, options = {}) {
+  const onProgress = typeof options.onProgress === "function" ? options.onProgress : null;
   const response = await fetch(url, {
     headers: {
       "user-agent": "med-whisper",
@@ -260,6 +268,10 @@ async function downloadToFile(url, destinationPath) {
   const tempPath = `${destinationPath}.download`;
   const hash = crypto.createHash("sha1");
   const readable = Readable.fromWeb(response.body);
+  const totalBytesHeader = response.headers.get("content-length");
+  const totalBytes = totalBytesHeader ? Number.parseInt(totalBytesHeader, 10) : null;
+  let receivedBytes = 0;
+  let lastReportedPercent = -1;
 
   await ensureDirectory(path.dirname(destinationPath));
 
@@ -279,6 +291,23 @@ async function downloadToFile(url, destinationPath) {
 
     readable.on("data", (chunk) => {
       hash.update(chunk);
+      receivedBytes += chunk.length;
+
+      if (!onProgress) {
+        return;
+      }
+
+      const percent = totalBytes ? Math.min(100, Math.round((receivedBytes / totalBytes) * 100)) : null;
+      if (percent !== null && percent === lastReportedPercent && receivedBytes < totalBytes) {
+        return;
+      }
+
+      lastReportedPercent = percent ?? lastReportedPercent;
+      onProgress({
+        receivedBytes,
+        totalBytes,
+        percent,
+      });
     });
 
     readable.on("error", handleError);
@@ -287,13 +316,21 @@ async function downloadToFile(url, destinationPath) {
     readable.pipe(writable);
   });
 
+  if (onProgress) {
+    onProgress({
+      receivedBytes,
+      totalBytes,
+      percent: totalBytes ? 100 : null,
+    });
+  }
+
   return {
     sha1: hash.digest("hex"),
     tempPath,
   };
 }
 
-async function downloadModel(context, modelId) {
+async function downloadModel(context, modelId, options = {}) {
   const model = KNOWN_MODELS.find((entry) => entry.id === modelId);
 
   if (!model) {
@@ -312,7 +349,7 @@ async function downloadModel(context, modelId) {
   }
 
   const url = `${OFFICIAL_MODEL_BASE_URL}/ggml-${modelId}.bin`;
-  const result = await downloadToFile(url, destinationPath);
+  const result = await downloadToFile(url, destinationPath, options);
 
   if (result.sha1 !== model.sha1) {
     await fsPromises.rm(result.tempPath, { force: true });
@@ -329,6 +366,25 @@ function createJobId() {
 
 function buildPreview(text) {
   return text.replace(/\s+/g, " ").trim().slice(0, 110);
+}
+
+function buildTitle(text) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+
+  if (!normalized) {
+    return "Untitled dictation";
+  }
+
+  const firstSentence = normalized.split(/(?<=[.!?])\s+/u)[0] || normalized;
+  const sentenceTitle = firstSentence.replace(/[.!?]+$/u, "").trim();
+
+  if (sentenceTitle.length >= 8 && sentenceTitle.length <= 64) {
+    return sentenceTitle;
+  }
+
+  const words = normalized.split(" ");
+  const shortTitle = words.slice(0, 7).join(" ");
+  return words.length > 7 ? `${shortTitle}...` : shortTitle;
 }
 
 async function cleanupFiles(...filePaths) {
@@ -438,6 +494,7 @@ async function saveTranscriptionEntry(context, payload) {
     id: createJobId(),
     createdAt: new Date().toISOString(),
     modelId: payload.modelId,
+    title: buildTitle(cleanedTranscript),
     preview: buildPreview(cleanedTranscript),
     transcript: cleanedTranscript,
     rawTranscript: (payload.rawTranscript || cleanedTranscript).trim(),
@@ -456,6 +513,7 @@ module.exports = {
   downloadModel,
   resolveWhisperState,
   saveModelsDir,
+  saveSelectedModelId,
   saveTranscriptionEntry,
   saveWhisperCliPath,
   transcribeAudio,

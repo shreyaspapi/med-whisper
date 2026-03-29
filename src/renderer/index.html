@@ -7,140 +7,198 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main class="app-shell">
+    <div class="app-container">
       <aside class="sidebar">
-        <div class="sidebar-header">
-          <div>
-            <p class="sidebar-label">Med Whisper</p>
-            <h1>Transcriptions</h1>
+        <header class="sidebar-header">
+          <div class="logo-area">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="icon-primary"
+            >
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" x2="12" y1="19" y2="22" />
+            </svg>
+            <span class="app-title">Med Whisper</span>
           </div>
-          <button class="primary-button" id="new-note-button">New transcription</button>
-        </div>
-
-        <div class="history-list" id="history-list"></div>
-        <p class="empty-history" id="history-empty">No saved transcriptions yet.</p>
-
-        <details class="settings-panel">
-          <summary>Settings</summary>
-
-          <div class="settings-body">
-            <div class="status-row">
-              <span class="status-chip" id="status-chip">Checking local setup</span>
-            </div>
-
-            <div class="simple-setting">
-              <div>
-                <p class="path-label">English dictation</p>
-                <p class="helper-text" id="dictation-summary">Preparing local Whisper model...</p>
-              </div>
-              <div class="button-stack compact">
-                <button class="secondary-button" id="download-model-button">Download dictation model</button>
-              </div>
-            </div>
-
-            <div class="simple-setting">
-              <div>
-                <p class="path-label">Medical cleanup</p>
-                <p class="helper-text" id="cleanup-summary">Optional local cleanup after transcription.</p>
-              </div>
-              <div class="button-stack compact">
-                <button class="secondary-button" id="download-cleanup-model-button">Download cleanup model</button>
-                <button class="secondary-button" id="toggle-cleanup-button">Use cleanup</button>
-              </div>
-            </div>
-
-            <div class="advanced-hidden" aria-hidden="true">
-              <label class="field">
-                <span class="field-label">Model</span>
-                <select id="model-select"></select>
-              </label>
-
-              <p class="helper-text" id="model-description">Model details will appear here.</p>
-
-              <div class="button-stack">
-                <button class="secondary-button" id="select-cli-button">Select whisper-cli</button>
-                <button class="secondary-button" id="select-models-button">Choose models folder</button>
-                <button class="secondary-button" id="open-models-button">Open models folder</button>
-              </div>
-
-              <div class="path-block">
-                <p class="path-label">whisper-cli</p>
-                <p class="path-value" id="cli-path">Not configured yet</p>
-              </div>
-
-              <div class="path-block">
-                <p class="path-label">Models folder</p>
-                <p class="path-value" id="models-dir">Preparing folder path...</p>
-              </div>
-
-              <label class="checkbox-row">
-                <input type="checkbox" id="cleanup-enabled" />
-                <span>Use local medical cleanup with llama.cpp</span>
-              </label>
-
-              <label class="field">
-                <span class="field-label">Cleanup model</span>
-                <select id="cleanup-model-select"></select>
-              </label>
-
-              <p class="helper-text" id="cleanup-model-description">
-                Choose a cleanup model for grammar and medical-term correction.
-              </p>
-
-              <div class="button-stack">
-                <button class="secondary-button" id="select-llama-button">Select llama-cli</button>
-                <button class="secondary-button" id="select-cleanup-model-button">Select cleanup model</button>
-              </div>
-
-              <div class="path-block">
-                <p class="path-label">llama-cli</p>
-                <p class="path-value" id="llama-cli-path">Not configured yet</p>
-              </div>
-
-              <div class="path-block">
-                <p class="path-label">Cleanup model</p>
-                <p class="path-value" id="cleanup-model-path">No GGUF model selected.</p>
-              </div>
-
-              <div class="path-block">
-                <p class="path-label">Cleanup model folder</p>
-                <p class="path-value" id="cleanup-models-dir">Preparing folder path...</p>
-              </div>
-            </div>
-          </div>
-        </details>
-      </aside>
-
-      <section class="main-panel">
-        <header class="main-header">
-          <div>
-            <p class="main-label" id="note-label">Current note</p>
-            <h2 id="note-title">New transcription</h2>
-            <p class="note-meta" id="note-meta">Ready for a new dictation.</p>
-          </div>
-          <p class="recording-timer" id="timer">00:00</p>
+          <button class="primary-button sidebar-new-button" id="new-note-button" type="button">
+            New note
+          </button>
         </header>
 
-        <section class="composer">
-          <div class="action-row">
-            <button class="primary-button" id="record-button">Start microphone</button>
-            <button class="danger-button" id="stop-button" disabled>Stop and transcribe</button>
-            <button class="secondary-button" id="copy-button" disabled>Copy</button>
+        <div class="history-container">
+          <div class="section-label">Recent notes</div>
+          <div class="history-list" id="history-list"></div>
+          <p class="empty-history" id="history-empty">No saved notes yet.</p>
+        </div>
+
+        <footer class="sidebar-footer">
+          <button class="ghost-button" id="open-settings-button" type="button">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+              ></path>
+            </svg>
+            <span>Settings</span>
+          </button>
+        </footer>
+      </aside>
+
+      <main class="main-content">
+        <header class="main-header">
+          <div class="note-info">
+            <h1 id="note-title">New note</h1>
+            <p id="note-meta" class="meta-text">Local dictation stays on this device.</p>
+          </div>
+          <div class="header-actions">
+            <span class="status-badge" id="status-chip">Checking local setup</span>
+            <div id="timer" class="timer" hidden>00:00</div>
+          </div>
+        </header>
+
+        <section class="activity-panel" id="activity-panel" hidden>
+          <div class="activity-header">
+            <div>
+              <p class="activity-label" id="activity-label">Preparing download</p>
+              <p class="activity-detail" id="activity-detail">Please wait</p>
+            </div>
+            <span class="activity-value" id="activity-value">0%</span>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <div class="progress-fill" id="activity-progress-bar"></div>
+          </div>
+        </section>
+
+        <section class="composer-card">
+          <div class="composer-copy">
+            <h2 class="composer-title">Dictation</h2>
+            <p class="status-message" id="session-status">Local dictation is getting ready.</p>
           </div>
 
-          <p class="session-status" id="session-status">
-            Local dictation is getting ready.
-          </p>
+          <div class="record-actions">
+            <button class="primary-action-button" id="record-button" type="button" aria-label="Start dictation">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" x2="12" y1="19" y2="22" />
+              </svg>
+              <span>Start dictation</span>
+            </button>
 
+            <button
+              class="danger-action-button"
+              id="stop-button"
+              type="button"
+              disabled
+              aria-label="Stop dictation and transcribe"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+              </svg>
+              <span>Stop and transcribe</span>
+            </button>
+
+            <button class="secondary-button" id="copy-button" type="button" disabled title="Copy to clipboard">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy text</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="output-area">
+          <div class="output-header">
+            <span>Transcript</span>
+            <span class="output-helper">Review before copying</span>
+          </div>
           <textarea
             id="transcript-output"
-            class="transcript-output"
-            placeholder="The transcript will appear here after you stop recording."
-            readonly
+            class="transcript-textarea"
+            placeholder="Your note will appear here after you stop dictating."
           ></textarea>
         </section>
-      </section>
-    </main>
+      </main>
+    </div>
+
+    <dialog id="settings-dialog" class="settings-modal">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="secondary-button compact-button" id="close-settings-button" type="button">Done</button>
+      </div>
+      <div class="modal-body">
+        <section class="settings-section">
+          <h4>English Dictation</h4>
+          <label class="field">
+            <span class="field-label">Quality</span>
+            <select id="model-select"></select>
+          </label>
+          <p class="setting-helper" id="dictation-summary">Preparing...</p>
+          <button class="secondary-button" id="download-model-button" type="button">Download selected model</button>
+        </section>
+
+        <section class="settings-section">
+          <h4>Medical Cleanup</h4>
+          <p class="setting-helper" id="cleanup-summary">Optional medical correction after transcription.</p>
+          <div class="button-group">
+            <button class="secondary-button" id="download-cleanup-model-button" type="button">
+              Download cleanup model
+            </button>
+            <button class="secondary-button" id="toggle-cleanup-button" type="button">Use cleanup</button>
+          </div>
+        </section>
+      </div>
+    </dialog>
 
     <script src="./audio-recorder.js"></script>
     <script src="./renderer.js"></script>

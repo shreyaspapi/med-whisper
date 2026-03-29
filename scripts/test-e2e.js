@@ -113,14 +113,18 @@ async function runTest() {
     await installFakeMicrophone(window);
 
     await window.waitForFunction(() => {
-      return document.getElementById("status-chip").textContent.includes("Whisper ready");
+      return document.getElementById("status-chip").textContent.includes("Ready");
     });
 
-    await window.locator(".settings-panel summary").click();
+    await window.click("#open-settings-button");
 
     await window.waitForFunction(() => {
-      return document.getElementById("dictation-summary").textContent.includes("base.en");
+      return document.getElementById("model-select").value === "base.en";
     });
+    await window.waitForFunction(() => {
+      return document.getElementById("dictation-summary").textContent.includes("Balanced");
+    });
+    await window.click("#close-settings-button");
     await window.waitForFunction(() => !document.getElementById("record-button").disabled);
 
     await window.click("#record-button");

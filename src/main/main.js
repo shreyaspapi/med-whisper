@@ -3,15 +3,18 @@ const path = require("path");
 const { app, BrowserWindow, clipboard, dialog, ipcMain, shell } = require("electron");
 const {
   downloadModel,
+  KNOWN_MODELS,
   saveTranscriptionEntry,
   resolveWhisperState,
   saveModelsDir,
+  saveSelectedModelId,
   saveWhisperCliPath,
   transcribeAudio,
 } = require("./whisper-service");
 const {
   cleanupTranscript,
   downloadCleanupModel,
+  KNOWN_CLEANUP_MODELS,
   resolveLlamaState,
   saveCleanupEnabled,
   saveCleanupModelPath,
@@ -36,6 +39,14 @@ async function sendStateToRenderer() {
 
   const state = await resolveAppState();
   mainWindow.webContents.send("app:state-updated", state);
+}
+
+function sendProgressToRenderer(progress) {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return;
+  }
+
+  mainWindow.webContents.send("app:progress-updated", progress);
 }
 
 async function resolveAppState() {
@@ -146,11 +157,46 @@ function registerIpcHandlers() {
     return resolveAppState();
   });
 
+  ipcMain.handle("app:set-selected-model", async (_event, modelId) => {
+    await saveSelectedModelId(buildRuntimeContext(), modelId);
+    return resolveAppState();
+  });
+
   ipcMain.handle("app:download-cleanup-model", async (_event, modelId) => {
-    await downloadCleanupModel(buildRuntimeContext(), modelId);
-    const state = await resolveAppState();
-    await sendStateToRenderer();
-    return state;
+    const context = buildRuntimeContext();
+    const cleanupModel = KNOWN_CLEANUP_MODELS.find((entry) => entry.id === modelId);
+
+    sendProgressToRenderer({
+      kind: "download",
+      target: "cleanup",
+      label: cleanupModel ? `Downloading ${cleanupModel.label}` : "Downloading cleanup model",
+      detail: cleanupModel ? cleanupModel.variantLabel : "Preparing download",
+      percent: 0,
+      receivedBytes: 0,
+      totalBytes: null,
+    });
+
+    try {
+      await downloadCleanupModel(context, modelId, {
+        onProgress: ({ receivedBytes, totalBytes, percent }) => {
+          sendProgressToRenderer({
+            kind: "download",
+            target: "cleanup",
+            label: cleanupModel ? `Downloading ${cleanupModel.label}` : "Downloading cleanup model",
+            detail: cleanupModel ? cleanupModel.variantLabel : "Preparing download",
+            percent,
+            receivedBytes,
+            totalBytes,
+          });
+        },
+      });
+
+      const state = await resolveAppState();
+      await sendStateToRenderer();
+      return state;
+    } finally {
+      sendProgressToRenderer(null);
+    }
   });
 
   ipcMain.handle("app:open-models-dir", async () => {
@@ -161,10 +207,40 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle("app:download-model", async (_event, modelId) => {
-    await downloadModel(buildRuntimeContext(), modelId);
-    const state = await resolveAppState();
-    await sendStateToRenderer();
-    return state;
+    const context = buildRuntimeContext();
+    const model = KNOWN_MODELS.find((entry) => entry.id === modelId);
+
+    sendProgressToRenderer({
+      kind: "download",
+      target: "dictation",
+      label: model ? `Downloading ${model.label}` : "Downloading dictation model",
+      detail: model ? model.sizeLabel : "Preparing download",
+      percent: 0,
+      receivedBytes: 0,
+      totalBytes: null,
+    });
+
+    try {
+      await downloadModel(context, modelId, {
+        onProgress: ({ receivedBytes, totalBytes, percent }) => {
+          sendProgressToRenderer({
+            kind: "download",
+            target: "dictation",
+            label: model ? `Downloading ${model.label}` : "Downloading dictation model",
+            detail: model ? model.sizeLabel : "Preparing download",
+            percent,
+            receivedBytes,
+            totalBytes,
+          });
+        },
+      });
+
+      const state = await resolveAppState();
+      await sendStateToRenderer();
+      return state;
+    } finally {
+      sendProgressToRenderer(null);
+    }
   });
 
   ipcMain.handle("app:transcribe", async (_event, payload) => {

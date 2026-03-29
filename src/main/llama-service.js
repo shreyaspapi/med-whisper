@@ -208,7 +208,8 @@ async function saveCleanupEnabled(context, cleanupEnabled) {
   await writeAppConfig(context, config);
 }
 
-async function downloadToFile(url, destinationPath) {
+async function downloadToFile(url, destinationPath, options = {}) {
+  const onProgress = typeof options.onProgress === "function" ? options.onProgress : null;
   const response = await fetch(url, {
     headers: {
       "user-agent": "med-whisper",
@@ -222,6 +223,10 @@ async function downloadToFile(url, destinationPath) {
 
   const tempPath = `${destinationPath}.${crypto.randomBytes(4).toString("hex")}.download`;
   const readable = Readable.fromWeb(response.body);
+  const totalBytesHeader = response.headers.get("content-length");
+  const totalBytes = totalBytesHeader ? Number.parseInt(totalBytesHeader, 10) : null;
+  let receivedBytes = 0;
+  let lastReportedPercent = -1;
 
   await fsPromises.mkdir(path.dirname(destinationPath), { recursive: true });
 
@@ -241,14 +246,41 @@ async function downloadToFile(url, destinationPath) {
 
     readable.on("error", handleError);
     writable.on("error", handleError);
+    readable.on("data", (chunk) => {
+      receivedBytes += chunk.length;
+
+      if (!onProgress) {
+        return;
+      }
+
+      const percent = totalBytes ? Math.min(100, Math.round((receivedBytes / totalBytes) * 100)) : null;
+      if (percent !== null && percent === lastReportedPercent && receivedBytes < totalBytes) {
+        return;
+      }
+
+      lastReportedPercent = percent ?? lastReportedPercent;
+      onProgress({
+        receivedBytes,
+        totalBytes,
+        percent,
+      });
+    });
     writable.on("finish", resolve);
     readable.pipe(writable);
   });
 
+  if (onProgress) {
+    onProgress({
+      receivedBytes,
+      totalBytes,
+      percent: totalBytes ? 100 : null,
+    });
+  }
+
   await fsPromises.rename(tempPath, destinationPath);
 }
 
-async function downloadCleanupModel(context, modelId) {
+async function downloadCleanupModel(context, modelId, options = {}) {
   const config = await readAppConfig(context);
   const cleanupModelsDir = config.cleanupModelsDir || getDefaultCleanupModelsDir(context);
   const model = KNOWN_CLEANUP_MODELS.find((entry) => entry.id === modelId);
@@ -260,7 +292,7 @@ async function downloadCleanupModel(context, modelId) {
   const destinationPath = getCleanupModelPath(cleanupModelsDir, modelId);
 
   if (!fileExists(destinationPath)) {
-    await downloadToFile(model.sourceUrl, destinationPath);
+    await downloadToFile(model.sourceUrl, destinationPath, options);
   }
 
   config.cleanupModelsDir = cleanupModelsDir;
